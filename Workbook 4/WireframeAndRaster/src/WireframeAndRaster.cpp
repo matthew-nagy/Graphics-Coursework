@@ -484,6 +484,8 @@ int main(int argc, char *argv[]) {
 	auto tris = objf.getModelTriangles(1.0f);
 	std::reverse(tris.begin(), tris.end());
 	printf("There are %lu model triangles\n", tris.size());
+	for(size_t i = 0; i < tris.size(); i++)
+		std::cout << "\t-"<<i<<tris[i]<<std::endl;
 	glm::vec3 camera(0.0, 0.0, -4.0);
 
 	//std::cout<<o;
