@@ -189,15 +189,23 @@ glm::vec3 ray_getNormalOf(const RayTriangleIntersection& rti, Model& model){
 	return glm::vec3(1);
 }
 
-float ray_getDiffuse(float distanceToLight, float insidentIntensity, const glm::vec3& u_intersectionToLight){
+float ray_getDiffuse(float distanceToLight, float insidentIntensity, const glm::vec3& u_surfaceToLight){
 	float radiusSqr = pow(std::abs(distanceToLight), 2);
 	float proximIntensity = __rayLightInfo.proximityNumerator/ (__rayLightInfo.proximityPiFactor * PI * radiusSqr);
 	clamp<float>(proximIntensity, 0.0, 1.0);
-	
 
 	float diffuseBrightness = (proximIntensity + insidentIntensity) / 2.0;
 	return diffuseBrightness;
 }
+
+float ray_getSpecular(const glm::vec3& u_surfaceToLight, const glm::vec3& u_surfaceNormal, const glm::vec3& cameraPos, const glm::vec3& surfacePos, float insidentIntensity){
+	glm::vec3 vectorOfReflection = u_surfaceToLight - (2.0f * u_surfaceNormal * insidentIntensity);
+	glm::vec3 rayDirection = surfacePos - cameraPos;
+	glm::vec3 intersectToView = glm::vec3(0) - glm::normalize(rayDirection);
+	float specularBrightness = pow(glm::dot(intersectToView, vectorOfReflection), __rayLightInfo.specularGeneralN);
+	return specularBrightness;
+}
+
 const float ignorDistThreshold = 0.05;
 
 float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm::vec3 rayDirection, bool ignoreGouraud = false){
@@ -232,36 +240,34 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 				auto intersectNormal = ray_getNormalOf(rti, model);
 
 				intersectNormal = glm::normalize(intersectNormal);
-				
-				float radiusSqr = pow(std::abs(distanceToLight), 2);
-				float proximIntensity = __rayLightInfo.proximityNumerator/ (__rayLightInfo.proximityPiFactor * PI * radiusSqr);
-				clamp<float>(proximIntensity, 0.0, 1.0);
 				float insidentIntensity = glm::dot(u_intersectionToLight, intersectNormal);
 				clamp<float>(insidentIntensity, 0.0, 1.0);
 
-				float diffuseBrightness = (proximIntensity + insidentIntensity) / 2.0;
-				//float lightIntensity = proximIntensity / 2.0;
-				//rti.intersectedTriangle.colour = Colour(50, 0, 255 * insidentIntensity);
-				//intersectionToLight = glm::normalize(intersectionToLight);
-				//rti.intersectedTriangle.colour = Colour((intersectionToLight.x+1) * 128.0, (intersectionToLight.y+1) * 128.0, (intersectionToLight.z+1) * 128.0);
-				
-				glm::vec3 vectorOfReflection = u_intersectionToLight - (2.0f * intersectNormal * insidentIntensity);
-				glm::vec3 intersectToView = glm::vec3(0) - glm::normalize(rayDirection);
-				float specularBrightness = pow(glm::dot(intersectToView, vectorOfReflection), __rayLightInfo.specularGeneralN);
+				// float diffuseBrightness = (proximIntensity + insidentIntensity) / 2.0;
+				float diffuseBrightness = ray_getDiffuse(distanceToLight, insidentIntensity, u_intersectionToLight);
+			
+				// glm::vec3 vectorOfReflection = u_intersectionToLight - (2.0f * intersectNormal * insidentIntensity);
+				// glm::vec3 intersectToView = glm::vec3(0) - glm::normalize(rayDirection);
+				// float specularBrightness = pow(glm::dot(intersectToView, vectorOfReflection), __rayLightInfo.specularGeneralN);
+				float specularBrightness = ray_getSpecular(u_intersectionToLight, intersectNormal, camera.rayPos, rti.intersectionPoint, insidentIntensity);
 
 
 				brightness = diffuseBrightness + specularBrightness;
 			}
 			else{
 				std::array<float, 3> rayBright;
-				Model nm = model;
-				nm.triangles.clear();
-				nm.triangles.emplace_back(rti.intersectedTriangle);
 				for(size_t i = 0; i <3;i++){
-					glm::vec3 ray = rti.intersectedTriangle.vertices[i] - camera.pos;
-					ray.z *= -1;
-					RayTriangleIntersection ni;
-					rayBright[i] = ray_setRTI(ni, nm, camera, ray, true);
+					glm::vec3& surfaceNormal = model.triangles[rti.triangleIndex].vertexNormals[i];
+					auto vertPos = rti.intersectedTriangle.vertices[i];
+					glm::vec3 vertexToLight = model.lights[0].position - rti.intersectedTriangle.vertices[i];
+					glm::vec3 u_vertexToLight = glm::normalize(vertexToLight);
+					float insidentIntensity = glm::dot(u_vertexToLight, surfaceNormal);
+					clamp<float>(insidentIntensity, 0.0, 1.0);
+
+					float diffuse = ray_getDiffuse(glm::length(vertexToLight), insidentIntensity, u_vertexToLight);
+					float specular = ray_getSpecular(u_vertexToLight, glm::normalize(surfaceNormal), camera.rayPos, vertPos, insidentIntensity);
+
+					rayBright[i] = diffuse + specular;
 				}
 				auto bcc = ray_barycentricProportions(rti);
 

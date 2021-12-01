@@ -1,0 +1,19 @@
+float radiusSqr = pow(std::abs(distanceToLight), 2);
+				float proximIntensity = __rayLightInfo.proximityNumerator/ (__rayLightInfo.proximityPiFactor * PI * radiusSqr);
+				clamp<float>(proximIntensity, 0.0, 1.0);
+				auto intersectNormal = ray_getNormalOf(rti);
+				float insidentIntensity = glm::dot(u_intersectionToLight, intersectNormal);
+				clamp<float>(insidentIntensity, 0.0, 1.0);
+
+				float diffuseBrightness = (proximIntensity + insidentIntensity) / 2.0;
+				//float lightIntensity = proximIntensity / 2.0;
+				//rti.intersectedTriangle.colour = Colour(50, 0, 255 * insidentIntensity);
+				//intersectionToLight = glm::normalize(intersectionToLight);
+				//rti.intersectedTriangle.colour = Colour((intersectionToLight.x+1) * 128.0, (intersectionToLight.y+1) * 128.0, (intersectionToLight.z+1) * 128.0);
+				
+				glm::vec3 vectorOfReflection = u_intersectionToLight - (2.0f * intersectNormal * insidentIntensity);
+				glm::vec3 intersectToView = glm::vec3(0) - glm::normalize(rayDirection);
+				float specularBrightness = pow(glm::dot(intersectToView, vectorOfReflection), __rayLightInfo.specularGeneralN);
+
+
+				brightness = diffuseBrightness + specularBrightness;

@@ -1,4 +1,4 @@
-#include "Wireframe.hpp"
+#include "Canvas and raytrace.hpp"
 #include <chrono>
 
 float focal = 2.0f;
@@ -20,7 +20,7 @@ void drawWireframe(Camera& camera, Window& window, const std::vector<ModelTriang
 	}
 }
 
-int toDraw = 1;
+int toDraw = 100;
 int tDraw = 0;
 
 void drawRasterisedView(Camera& camera, Window& window, const std::vector<ModelTriangle>& tris){
@@ -87,7 +87,8 @@ void handleCamera(SDL_Event event, Camera& camera, int64_t deltaT){
 int main(int argc, char *argv[]) {
 	//char a;
 	//std::cin>>a;
-	std::ifstream f("Cornell-box-upd.obj", std::ios::in);
+	//std::ifstream f("Cornell-box-upd.obj", std::ios::in);
+	std::ifstream f("RayTest.obj", std::ios::in);
 	if(f.bad() || f.eof()){
 		throw(0);
 	}
