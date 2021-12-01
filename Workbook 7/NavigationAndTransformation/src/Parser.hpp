@@ -167,10 +167,12 @@ Model ObjFile::getModel(float scaleFactor){
 		ModelTriangle newTri;
 		newTri.normalFinder = faceNormalTypes[i];
 		newTri.normal = normals[i];
+
 		//If these vertices have different materials then by fuck I will flip
 		Material* m = f[0].material;
 		for(size_t i = 0; i < 3; i ++){
 			newTri.vertices[i] = f[i].pos;
+			newTri.vertexNormals[i] = f[i].vertNormal;
 			if(!m->isColour){
 				newTri.texturePoints[i] = f[i].uvCoords;
 				newTri.texturePoints[i].x *= m->tMap->width;

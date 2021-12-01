@@ -166,20 +166,15 @@ glm::vec3 ray_getPhongNormal(const RayTriangleIntersection& rti, Model& model){
 	auto bcc = ray_barycentricProportions(rti);
 	auto& normals = model.triangles[rti.triangleIndex].vertexNormals;
 
-	for(size_t i = 0; i < model.triangles.size();i++)
-		for(size_t k = 0; k < 3; k++)
-			if(model.triangles[i].vertexNormals[k] != glm::vec3(0))
-				printf("%zu %zu\n", i, k);
-
 	auto normal = (normals[0]*bcc[2]) + (normals[1]*bcc[0]) + (normals[2]*bcc[1]);
-	char a;
-	printf("Normals are:\n");
-	unsigned prop[] = {2, 0, 1};
-	for(size_t i = 0; i < 3; i++){
-		printf("\t%f of %f %f %f\n", bcc[prop[i]], normals[i].x, normals[i].y, normals[i].z);
-	}
-	printf("\nFor a total of %f %f %f\n", normal.x, normal.y, normal.z);
-	std::cin>>a;
+	// char a;
+	// printf("Normals are:\n");
+	// unsigned prop[] = {2, 0, 1};
+	// for(size_t i = 0; i < 3; i++){
+	// 	printf("\t%f of %f %f %f\n", bcc[prop[i]], normals[i].x, normals[i].y, normals[i].z);
+	// }
+	// printf("\nFor a total of %f %f %f\n", normal.x, normal.y, normal.z);
+	// std::cin>>a;
 	return normal;
 }
 
@@ -203,17 +198,17 @@ float ray_getDiffuse(float distanceToLight, float insidentIntensity, const glm::
 	float diffuseBrightness = (proximIntensity + insidentIntensity) / 2.0;
 	return diffuseBrightness;
 }
-const float ignorDistThreshold = 0.005;
+const float ignorDistThreshold = 0.05;
 
 float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm::vec3 rayDirection, bool ignoreGouraud = false){
 	//Now handle lighting
 	float brightness = 0.2;
 	if(rti.hasIntersection){
-				auto intersectNormal = ray_getNormalOf(rti, model);
+				// auto intersectNormal = ray_getNormalOf(rti, model);
 
-				intersectNormal = glm::normalize(intersectNormal);
-				rti.intersectedTriangle.colour = Colour(128.0 * (intersectNormal.x+1), 128.0 * (intersectNormal.y+1), 128.0);
-				return 0.5;
+				// intersectNormal = glm::normalize(intersectNormal);
+				// rti.intersectedTriangle.colour = Colour(128.0 * (intersectNormal.x+1), 128.0 * (intersectNormal.y+1), 128.0);
+				// return 0.5;
 
 		glm::vec3 intersectPosition = rti.intersectionPoint;
 		glm::vec3 intersectionToLight = model.lights[0].position - intersectPosition;
@@ -237,8 +232,6 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 				auto intersectNormal = ray_getNormalOf(rti, model);
 
 				intersectNormal = glm::normalize(intersectNormal);
-				rti.intersectedTriangle.colour = Colour(255.0 * intersectNormal.x, 255.0 * intersectNormal.y, 255.0* intersectNormal.z);
-				return 0.5;
 				
 				float radiusSqr = pow(std::abs(distanceToLight), 2);
 				float proximIntensity = __rayLightInfo.proximityNumerator/ (__rayLightInfo.proximityPiFactor * PI * radiusSqr);
