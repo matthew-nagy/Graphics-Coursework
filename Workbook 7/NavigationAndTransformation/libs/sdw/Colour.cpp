@@ -17,6 +17,12 @@ Colour::Colour(std::array<int, 3> vals){
 Colour::Colour(std::string n, int r, int g, int b) :
 		name(std::move(n)),
 		red(r), green(g), blue(b) {}
+		
+Colour::Colour(uint32_t c){
+	red = (c & 0x00FF0000) >> 16;
+	green = (c & 0x0000FF00) >> 8;
+	blue = (c & 0x000000FF);
+}
 
 std::ostream &operator<<(std::ostream &os, const Colour &colour) {
 	os << colour.name << " ["

@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 	//std::ifstream f("RayTest.obj", std::ios::in);
 	//std::ifstream f("Cornell-box-upd.obj", std::ios::in);
 	//std::ifstream f("Sphere-low.obj", std::ios::in);
-	std::string models[] = {"RayTest.obj", "Cornell-box-upd.obj", "Gouraud-Sphere-low.obj","Phong-Sphere-low.obj"};
+	std::string models[] = {"RayTest.obj", "Cornell-box-upd.obj", "Gouraud-Sphere-low.obj","Phong-Sphere-low.obj", "cornell-spicy.obj"};
 	std::ifstream f(models[int(__config["model"])], std::ios::in);
 	if(f.bad() || f.eof()){
 		throw(0);

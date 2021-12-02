@@ -14,10 +14,10 @@
 #include <unordered_map>
 #include <cstring>
 
-// #define WIDTH 600
-// #define HEIGHT 550
-#define WIDTH 200
-#define HEIGHT 200
+#define WIDTH 640
+#define HEIGHT 480
+// #define WIDTH 100
+// #define HEIGHT 80
 
 float c_totXRot = 0.0f;
 float c_totYRot = 0.0f;

@@ -15,6 +15,8 @@ struct Material{
 	Colour col;
     TextureMap* tMap;
 	std::string name;
+	float specN = -1;
+	float reflectivity = 0.0;
 };
 struct Vert{
 	glm::vec3 pos;
@@ -46,6 +48,7 @@ struct ObjFile{
 
 	std::vector< std::array<Vert, 3>> faces;
 	std::vector<NormalType> faceNormalTypes;
+	std::vector<float> specNValues;
 	std::vector<glm::vec3> normals;
 
 
@@ -63,7 +66,6 @@ glm::vec3 getNormals(const std::array<Vert, 3>& face){
 	auto b = face[2].pos - face[0].pos;
 
 	auto norm = glm::normalize(glm::cross(a, b));
-	printf("Normal is %f %f %f\n", norm.x, norm.y, norm.z);
 
 	return norm;
 }
@@ -74,6 +76,7 @@ void ObjFile::readInObj(std::ifstream& inFile){
 	std::string currentLine = "";
 	Material* currentMaterial = nullptr;
 	NormalType currentNormalType = Regular;
+	float globalSpecN = __config["spec_general_n"];
 	while(std::getline(inFile, currentLine)){
 		auto splits = splitStringOn(currentLine, ' ');
 		if(splits[0] == "mtllib"){
@@ -113,6 +116,15 @@ void ObjFile::readInObj(std::ifstream& inFile){
 			faces.emplace_back(face);
 			faceNormalTypes.emplace_back(currentNormalType);
 			normals.emplace_back(getNormals(face));
+			
+			if(currentMaterial->specN == -1){
+				specNValues.emplace_back(globalSpecN);
+				printf("Using global spec\n");
+			}
+			else{
+				specNValues.emplace_back(currentMaterial->specN);
+				printf("Using a spec value\n");
+			}
 		}
 		else if(splits[0] == "RegularNormal")
 			currentNormalType = Regular;
@@ -136,6 +148,8 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 				onMtl = false;
 				materials[mtlName] = currentMtl;
 				currentMtl.tMap = nullptr;
+				currentMtl.specN = -1;
+				currentMtl.reflectivity = 0.0;
 			}
 		}
 		else if(splits[0] == "newmtl"){
@@ -150,6 +164,12 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 		else if(splits[0] == "map_Kd"){
 			currentMtl.isColour = false;
 			currentMtl.tMap = new TextureMap(splits[1]);
+		}
+		else if(splits[0] == "specN"){
+			currentMtl.specN = std::atof(splits[1].c_str());
+		}
+		else if(splits[0] == "reflective"){
+			currentMtl.reflectivity = std::atof(splits[1].c_str());
 		}
 	}
 
@@ -167,17 +187,18 @@ Model ObjFile::getModel(float scaleFactor){
 		ModelTriangle newTri;
 		newTri.normalFinder = faceNormalTypes[i];
 		newTri.normal = normals[i];
+		newTri.specN = specNValues[i];
 
 		//If these vertices have different materials then by fuck I will flip
 		Material* m = f[0].material;
-		for(size_t i = 0; i < 3; i ++){
-			newTri.vertices[i] = f[i].pos;
-			newTri.vertexNormals[i] = f[i].vertNormal;
+		newTri.reflectivity = m->reflectivity;
+		for(size_t j = 0; j < 3; j ++){
+			newTri.vertices[j] = f[j].pos;
+			newTri.vertexNormals[j] = f[j].vertNormal;
 			if(!m->isColour){
-				newTri.texturePoints[i] = f[i].uvCoords;
-				newTri.texturePoints[i].x *= m->tMap->width;
-				newTri.texturePoints[i].y *= m->tMap->height;
-				printf("%f, %f\n", newTri.texturePoints[i].x, newTri.texturePoints[i].y);
+				newTri.texturePoints[j] = f[j].uvCoords;
+				newTri.texturePoints[j].x *= m->tMap->width;
+				newTri.texturePoints[j].y *= m->tMap->height;
 			}
 		}
 

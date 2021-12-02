@@ -11,13 +11,13 @@ std::ostream &operator<<(std::ostream &os, const TexturePoint &point) {
 TexturePoint operator+(const TexturePoint& left, const TexturePoint& right){
 	TexturePoint ret;
 	ret.x = left.x + right.x;
-	ret.y = left.x + right.y;
+	ret.y = left.y + right.y;
 	return ret;
 }
 TexturePoint operator-(const TexturePoint& left, const TexturePoint& right){
 	TexturePoint ret;
 	ret.x = left.x - right.x;
-	ret.y = left.x - right.y;
+	ret.y = left.y - right.y;
 	return ret;
 }
 TexturePoint operator*(const TexturePoint& left, float scale){

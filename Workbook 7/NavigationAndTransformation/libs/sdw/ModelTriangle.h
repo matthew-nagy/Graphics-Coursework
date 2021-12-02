@@ -18,6 +18,9 @@ struct ModelTriangle {
 	glm::vec3 normal{};
 	TextureMap* texture = nullptr;
 
+	float specN;
+	float reflectivity;
+
 	float area;
 
 	bool foundGouraudThisFrame = false;

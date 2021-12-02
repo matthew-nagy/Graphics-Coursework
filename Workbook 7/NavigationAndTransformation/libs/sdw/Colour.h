@@ -12,6 +12,7 @@ struct Colour {
 	Colour(int r, int g, int b);
 	Colour(std::array<int, 3> vals);
 	Colour(std::string n, int r, int g, int b);
+	Colour(uint32_t c);
 };
 
 std::ostream &operator<<(std::ostream &os, const Colour &colour);

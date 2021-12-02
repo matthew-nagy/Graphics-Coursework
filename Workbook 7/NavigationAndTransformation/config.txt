@@ -1,4 +1,4 @@
 plight_pi_factor:4
 plight_numerator:100
 spec_general_n:64
-model:3
+model:4
