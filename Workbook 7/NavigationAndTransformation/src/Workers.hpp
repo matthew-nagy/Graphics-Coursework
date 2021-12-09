@@ -69,7 +69,7 @@ namespace pool{
         std::queue<Work> workQueue;
         Semaphore workSemaphore(0);
 
-        const unsigned numberOfWorkers = 4;
+        const unsigned numberOfWorkers = 12;
         std::array<std::thread, numberOfWorkers> workers;
         Semaphore deadWorkerLock(0);
 

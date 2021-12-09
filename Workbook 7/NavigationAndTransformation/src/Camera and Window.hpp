@@ -107,6 +107,46 @@ struct Camera{
 	//Orientation for raytrace
 	glm::mat3 rayOrientation;
 
+	float xLook = 0;
+	float yLook = 0;
+
+	//Used for animation
+	void setXY(float XL, float YL){
+		xLook = XL;
+		yLook = YL;
+		rotateViewY(0);
+	}
+
+	void rotateViewX(float degrees){
+		xLook += degrees;
+
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(xLook)) * cos(glm::radians(yLook));
+		direction.y = sin(glm::radians(yLook));
+		direction.z = sin(glm::radians(xLook)) * cos(glm::radians(yLook));
+		
+		glm::vec3 front = glm::normalize(direction);
+		orientation = getMat3FromForwards(front);
+		rayOrientation = glm::inverse(getMat3FromForwards(front));
+
+		//printf("%f %f %f\n", rayOrientation[0].x, rayOrientation[0].y, rayOrientation[0].z);
+
+
+	}
+	void rotateViewY(float degrees){
+		yLook += degrees;
+
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(xLook)) * cos(glm::radians(yLook));
+		direction.y = sin(glm::radians(yLook));
+		direction.z = sin(glm::radians(xLook)) * cos(glm::radians(yLook));
+		glm::vec3 front = glm::normalize(direction);
+		orientation = getMat3FromForwards(front);
+		rayOrientation = glm::inverse(getMat3FromForwards(front));
+		//printf("%f %f %f\n", rayOrientation[0].x, rayOrientation[0].y, rayOrientation[0].z);
+		
+	}
+
 	float focalLength;
 
 	void move(float x, float y, float z){
@@ -160,9 +200,8 @@ struct Camera{
 	}
 
 private:
-	glm::mat3 getLookAt(const glm::vec3& lookPosition, const glm::vec3& currentPosition){
-		
-		glm::vec3 forwards = currentPosition - lookPosition;
+
+	glm::mat3 getMat3FromForwards(glm::vec3 forwards){
 		glm::vec3 right = glm::cross(forwards, glm::vec3(0, 1, 0));
 		glm::vec3 up = glm::cross(forwards, right);
 
@@ -172,8 +211,14 @@ private:
 
 		right.x *= -1; right.y *= -1; right.z *= -1;
 		up.x *= -1; up.y *= -1; up.z *= -1;
-
 		return glm::mat3(right, up, forwards);
+
+	}
+
+	glm::mat3 getLookAt(const glm::vec3& lookPosition, const glm::vec3& currentPosition){
+		
+		glm::vec3 forwards = currentPosition - lookPosition;
+		return getMat3FromForwards(forwards);
 	}
 };
 

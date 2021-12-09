@@ -1,60 +1,4 @@
-#include "Canvas and raytrace.hpp"
-#include "Workers.hpp"
-#include <chrono>
-
-float focal = 2.0f;
-
-void drawPointCloud(Camera& camera, Window& window, const std::vector<ModelTriangle>& tris){
-	for(auto& M : tris){
-		CanvasTriangle cTri = getCanvasTri(camera, M);
-		for(auto& p : cTri.vertices)
-			window.setPixelColour(p.x, p.y, getColourData(Colour(255, 255, 255)));	
-	}
-}
-
-void drawWireframe(Camera& camera, Window& window, const std::vector<ModelTriangle>& tris){
-	for(auto& M : tris){
-		CanvasTriangle cTri = getCanvasTri(camera, M);
-		Colour c = M.colour;
-		if(M.texture != nullptr) c = Colour(200, 200, 200);
-		drawWireframe(cTri, window, c);	
-	}
-}
-
-int toDraw = 100;
-int tDraw = 0;
-
-void drawRasterisedView(Camera& camera, Window& window, const std::vector<ModelTriangle>& tris){
-	int count = 0;
-	for(auto& M : tris){
-		CanvasTriangle cTri = getCanvasTri(camera, M);
-		if(M.texture != nullptr){
-			drawRaster(cTri, window, M.texture);
-			if(tDraw < 1){
-				printf("Texture with ps,  %f,%f   %f,%f   %f,%f\n", cTri[0].texturePoint.x, cTri[0].texturePoint.y,
-				cTri[1].texturePoint.x, cTri[1].texturePoint.y, cTri[2].texturePoint.x, cTri[2].texturePoint.y);
-				tDraw += 1;
-			}
-		}
-		else
-			drawRaster(cTri, window, M.colour);
-		count ++;
-		if(count > toDraw)
-			return;
-	}
-}
-
-TextureMap tm;
-void draw(DrawingWindow &window) {
-	window.clearPixels();
-}
-
-enum DrawMode{
-	PointCloud, Wireframe, Raster, Raytrace
-};
-DrawMode drawmode = Raster;
-
-bool orbit = false;
+#include "Scripting.hpp"
 
 void handleEvent(SDL_Event event, Window &window, Camera& camera) {
 	if (event.type == SDL_KEYDOWN) {
@@ -93,11 +37,19 @@ void handleCamera(SDL_Event event, Camera& camera, int64_t deltaT){
 
 		if(event.key.keysym.sym == SDLK_0)
 			camera.lookAt(glm::vec3(0, 0, 0));
+		if(event.key.keysym.sym == SDLK_UP)
+			camera.rotateViewY(mr);
+		if(event.key.keysym.sym == SDLK_DOWN)
+			camera.rotateViewY(pr);
 		if(event.key.keysym.sym == SDLK_LEFT)
-			camera.rotatePositionAround('y', mr);
+			camera.rotateViewX(mr);
 		if(event.key.keysym.sym == SDLK_RIGHT)
-			camera.rotatePositionAround('y', pr);
+			camera.rotateViewX(pr);
 
+		if(event.key.keysym.sym == SDLK_RCTRL){
+			CameraPosFrame(camera).printOut();
+			CameraRotFrame(camera).printout();
+		}
 	}
 }
 
@@ -150,9 +102,18 @@ void handleFlags(SDL_Event event){
 			mode::superAntiAliasing = false;
 	}
 
+	if(event.key.keysym.sym == SDLK_RSHIFT)
+		FlagPack(true).printOut();
+
 }
 
 int main(int argc, char *argv[]) {
+
+	auto x = interpolateWeighted<float, 1>(std::array<float, 1>{0}, std::array<float, 1>{1}, 10, [](float prop){return float(sin(prop * 3.141592 / 2.0));});
+	for(size_t i = 0; i < 10; i++)
+		printf("%f\n", x[i][0]);
+
+
 	loadConfig();
 	__rayLightInfo.load();
 	
@@ -188,13 +149,19 @@ int main(int argc, char *argv[]) {
 	//SDL_Window dp(window);
 	Depth_Window dp(window);
 	SDL_Event event;
-	float orbitSpeed = 0.1;
-
-	std::array<std::array<uint32_t, WIDTH>, HEIGHT>* raytraceInfo = new std::array<std::array<uint32_t, WIDTH>, HEIGHT>;
-	std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>* superScalerRaytraceInfo = new std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>;
 
 	float totalT = 0.0;
 	unsigned fCount = 0;
+
+
+	//LMAO render the scene
+	ScriptedAnimation myAnimation(camera, model, &dp, &window, "Test scene");
+	printf("About to load the scene\n");
+	myAnimation.loadProgram("TestAnimation.anim");
+	printf("Scene loaded\n");
+	myAnimation.render();
+	printf("Scene has been rendered\n");
+
 	while (window.isOpen()) {
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -242,7 +209,7 @@ int main(int argc, char *argv[]) {
 		fCount++;
 		if(totalT >= 1000.0){
 			totalT -= 1000.0;
-			printf("> %u fps\n", fCount);
+			//printf("> %u fps\n", fCount);
 			fCount = 0;
 		}
 	}
