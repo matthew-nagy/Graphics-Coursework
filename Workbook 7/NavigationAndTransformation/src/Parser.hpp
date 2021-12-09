@@ -11,6 +11,7 @@ namespace mode{
 	bool superAntiAliasing = false;
 	bool fastAproxAntiAliasing = false;
 	float qualityOffLevel = 5;
+	const int superScalerQuality = 3;
 }
 
 /*

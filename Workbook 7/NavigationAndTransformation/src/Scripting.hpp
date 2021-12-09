@@ -194,7 +194,7 @@ private:
 float orbitSpeed = 0.1;
 
 std::array<std::array<uint32_t, WIDTH>, HEIGHT>* raytraceInfo = new std::array<std::array<uint32_t, WIDTH>, HEIGHT>;
-std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>* superScalerRaytraceInfo = new std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>;
+std::array<std::array<uint32_t, WIDTH*mode::superScalerQuality>, HEIGHT*mode::superScalerQuality>* superScalerRaytraceInfo = new std::array<std::array<uint32_t, WIDTH*mode::superScalerQuality>, HEIGHT*mode::superScalerQuality>;
 
 class ScriptedAnimation{
 public:
@@ -300,8 +300,8 @@ private:
 				break;
 			case Raytrace:
 				if(mode::superAntiAliasing){
-					ray_raytraceInto<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, (*model), (*camera));
-					ray_drawResult<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, *window);
+					ray_raytraceInto<WIDTH*mode::superScalerQuality, HEIGHT*mode::superScalerQuality>(*superScalerRaytraceInfo, (*model), (*camera));
+					ray_drawResult<WIDTH*mode::superScalerQuality, HEIGHT*mode::superScalerQuality>(*superScalerRaytraceInfo, *window);
 				}
 				else{
 					ray_raytraceInto<WIDTH, HEIGHT>(*raytraceInfo, (*model), (*camera));

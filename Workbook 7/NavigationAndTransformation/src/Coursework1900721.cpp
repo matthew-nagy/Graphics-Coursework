@@ -159,7 +159,8 @@ int main(int argc, char *argv[]) {
 	printf("About to load the scene\n");
 	myAnimation.loadProgram("TestAnimation.anim");
 	printf("Scene loaded\n");
-	myAnimation.render();
+	if(__config["render"] == 1.0)
+		myAnimation.render();
 	printf("Scene has been rendered\n");
 
 	while (window.isOpen()) {
@@ -193,8 +194,8 @@ int main(int argc, char *argv[]) {
 				break;
 			case Raytrace:
 				if(mode::superAntiAliasing){
-					ray_raytraceInto<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, model, camera);
-					ray_drawResult<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, dp);
+					ray_raytraceInto<WIDTH*mode::superScalerQuality, HEIGHT*mode::superScalerQuality>(*superScalerRaytraceInfo, model, camera);
+					ray_drawResult<WIDTH*mode::superScalerQuality, HEIGHT*mode::superScalerQuality>(*superScalerRaytraceInfo, dp);
 				}
 				else{
 					ray_raytraceInto<WIDTH, HEIGHT>(*raytraceInfo, model, camera);

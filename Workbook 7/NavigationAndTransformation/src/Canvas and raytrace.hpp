@@ -394,6 +394,7 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 	totBrightness = totBrightness / float(model.lights.size());
 
 	if(mode::cellShading){
+		printf("REEEE\n");
 		ray_cellShadeBrightness(totBrightness);
 	}
 
@@ -496,9 +497,13 @@ void ray_drawResult(std::array<std::array<uint32_t, RW>, RH>& info, Window& wind
 					window.setPixelColour(x, y, getColourData(finalColour), 0);
 				}
 				else if(mode::superAntiAliasing){
-					size_t sy = y * 4;
-					size_t sx = x * 4;
-					Colour finalColour = (Colour(info[sy][sx]) * 0.25) + (Colour(info[sy][sx+1]) * 0.25) + (Colour(info[sy+1][sx]) * 0.25) + (Colour(info[sy+1][sx+1]) * 0.25);
+					size_t sy = y * mode::superScalerQuality;
+					size_t sx = x * mode::superScalerQuality;
+					float downscaleLevel = 1.0 / (float(mode::superScalerQuality) * float(mode::superScalerQuality));
+					Colour finalColour(0,0,0);
+					for(size_t i = 0; i < mode::superScalerQuality;i++)
+						for(size_t j = 0; j < mode::superScalerQuality;j++)
+							finalColour = finalColour + (Colour(info[sy + i][sx + j]) * downscaleLevel);
 					window.setPixelColour(x, y, getColourData(finalColour));
 				}
 				else{

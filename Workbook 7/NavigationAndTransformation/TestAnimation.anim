@@ -3,7 +3,7 @@ Length
 
 From 0 To 23 Instant
 SetEngine Raytrace
-Flags O O O O O O X 
+Flags O O O O X O X 
 End
 
 From 0 To 0 Instant

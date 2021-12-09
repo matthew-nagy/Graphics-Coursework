@@ -8,3 +8,4 @@ cell_mid_thresh:0.8
 cell_mid_value:0.7
 cell_high_thresh:1.0
 cell_high_value:1.0
+render:0
