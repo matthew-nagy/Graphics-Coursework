@@ -35,6 +35,11 @@ map_Kd checker.ppm
 map_Kb rockBump.ppm
 reflective 0.3
 
+newmtl MipChecker
+Kd 1.0 1.0 1.0
+mip 3.0 10.0
+map_Kd checker.ppm
+
 newmtl sphereMtl
 Kd 0.8 0.0 0.9
 reflective 0.3

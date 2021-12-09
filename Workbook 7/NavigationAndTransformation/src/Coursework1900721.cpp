@@ -98,8 +98,6 @@ void handleCamera(SDL_Event event, Camera& camera, int64_t deltaT){
 		if(event.key.keysym.sym == SDLK_RIGHT)
 			camera.rotatePositionAround('y', pr);
 
-
-		if (event.key.keysym.sym == SDLK_q) printf("Rotation is \tx: %f \ty: %f\n", c_totXRot, c_totYRot);
 	}
 }
 
@@ -141,6 +139,16 @@ void handleFlags(SDL_Event event){
 		mode::quality = mode::setter;
 	if(event.key.keysym.sym == SDLK_u)
 		mode::cellShading = mode::setter;
+	if(event.key.keysym.sym == SDLK_TAB){
+		mode::superAntiAliasing = mode::setter;
+		if(mode::setter)
+			mode::fastAproxAntiAliasing = false;
+	}
+	if(event.key.keysym.sym == SDLK_q){
+		mode::fastAproxAntiAliasing = mode::setter;
+		if(mode::setter)
+			mode::superAntiAliasing = false;
+	}
 
 }
 
@@ -183,6 +191,7 @@ int main(int argc, char *argv[]) {
 	float orbitSpeed = 0.1;
 
 	std::array<std::array<uint32_t, WIDTH>, HEIGHT>* raytraceInfo = new std::array<std::array<uint32_t, WIDTH>, HEIGHT>;
+	std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>* superScalerRaytraceInfo = new std::array<std::array<uint32_t, WIDTH*4>, HEIGHT*4>;
 
 	float totalT = 0.0;
 	unsigned fCount = 0;
@@ -216,8 +225,14 @@ int main(int argc, char *argv[]) {
 				drawRasterisedView(camera, dp, model.triangles);
 				break;
 			case Raytrace:
-				ray_raytraceInto(*raytraceInfo, model, camera);
-				ray_drawResult(*raytraceInfo, dp);
+				if(mode::superAntiAliasing){
+					ray_raytraceInto<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, model, camera);
+					ray_drawResult<WIDTH*4, HEIGHT*4>(*superScalerRaytraceInfo, dp);
+				}
+				else{
+					ray_raytraceInto<WIDTH, HEIGHT>(*raytraceInfo, model, camera);
+					ray_drawResult<WIDTH, HEIGHT>(*raytraceInfo, dp);
+				}
 				break;
 		}
 		window.renderFrame();

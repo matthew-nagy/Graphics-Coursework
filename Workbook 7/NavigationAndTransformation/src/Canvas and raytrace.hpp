@@ -117,9 +117,9 @@ bool ray_solutionValid(const glm::vec3& solution){
 	return isValid;
 }
 
-
+template<size_t RowWidth>
 struct RowTrace{
-	std::array<uint32_t, WIDTH>* intoRow;
+	std::array<uint32_t, RowWidth>* intoRow;
 	float rayY;
 	Model* model;
 	Camera* camera;
@@ -175,7 +175,7 @@ Colour ray_getTexColour(const RayTriangleIntersection& rti, TextureMode texMode 
 
 	TexturePoint tp = (tri.texturePoints[0] * bary[2]) + (tri.texturePoints[1] * bary[0]) + (tri.texturePoints[2] * bary[1]);
 
-	return Colour(getColourData(tp.x, tp.y, tex));
+	return Colour(getColourData(tp.x, tp.y, tex, rti.distanceFromCamera));
 }
 
 RayTriangleIntersection ray_getCell(Model& model, const glm::vec3& rayDirection, glm::vec3& shooterPosition, int ignoredIndex = -1){
@@ -428,14 +428,15 @@ RayTriangleIntersection ray_getRay(glm::vec3 rayDirection, Camera& camera, glm::
 	return rti;
 }
 
+template<int RTWidth>
 void ray_traceRow(void* voidRowTracePtr){
-	RowTrace* rowTrace = (RowTrace*)voidRowTracePtr;
+	RowTrace<RTWidth>* rowTrace = (RowTrace<RTWidth>*)voidRowTracePtr;
 	int arrayX = 0;
 	Camera& camera = *rowTrace->camera;
 	Model& model = *rowTrace->model;
 	float focalDivider = 300.0;
-	float incr = mode::quality ? 1 : mode::qualityOffLevel;
-	for(float x = WIDTH / -2; x < WIDTH / 2 && arrayX < WIDTH; x+= incr){
+	float incr = mode::quality ? float(WIDTH) / float(RTWidth) : mode::qualityOffLevel;
+	for(float x = WIDTH / -2.0; x < WIDTH / 2.0; x += incr){
 		glm::vec3 rayDirection(x / focalDivider, rowTrace->rayY / focalDivider * -1, camera.focalLength * -1);
 		RayTriangleIntersection ray = ray_getRay(rayDirection, camera, camera.rayPos, model);
 		if(ray.hasIntersection)
@@ -450,20 +451,21 @@ void ray_traceRow(void* voidRowTracePtr){
 	delete rowTrace;
 }
 
-void ray_raytraceInto(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& into, Model& model, Camera& camera){
+template<size_t RWidth, int RHeight>
+void ray_raytraceInto(std::array<std::array<uint32_t, RWidth>, RHeight>& into, Model& model, Camera& camera){
 	int arrayX, arrayY;
 	arrayX = arrayY = 0;
 	Semaphore finish(0);
-	float incr = mode::quality ? 1 : mode::qualityOffLevel;
-	for(float y = HEIGHT / -2.0; y < HEIGHT / 2.0 && arrayY < HEIGHT; y+= incr){
-		RowTrace* thisRow = new RowTrace();
+	float incr = mode::quality ? float(HEIGHT) / float(RHeight) : mode::qualityOffLevel;
+	for(float y = HEIGHT / -2.0; y < HEIGHT / 2.0; y += incr){
+		RowTrace<RWidth>* thisRow = new RowTrace<RWidth>();
 		thisRow->camera = &camera;
 		thisRow->model = &model;
 		thisRow->intoRow = &into[arrayY];
 		thisRow->rayY = y;
 		thisRow->finishSemaphore = &finish;
 
-		pool::addWork(ray_traceRow, (void*)thisRow);
+		pool::addWork(ray_traceRow<RWidth>, (void*)thisRow);
 
 		arrayY++;
 	}
@@ -471,7 +473,8 @@ void ray_raytraceInto(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& into, Mod
 		finish.decriment();
 }
 
-void ray_drawResult(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& info, Window& window){
+template<int RW, int RH>
+void ray_drawResult(std::array<std::array<uint32_t, RW>, RH>& info, Window& window){
 	float incr = mode::quality ? 1 : mode::qualityOffLevel;
 	for(size_t y = 0; y < HEIGHT / incr; y++){
 		for(size_t x = 0; x < WIDTH / incr; x++){
@@ -479,8 +482,29 @@ void ray_drawResult(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& info, Windo
 				for(size_t i = 0; i < incr; i++)
 					for(size_t j = 0; j < incr; j++)
 						window.setPixelColour((x*incr)+j, (y*incr)+i, info[y][x], 0);
-			else
-						window.setPixelColour(x, y, info[y][x], 0);
+			else{
+				if(mode::fastAproxAntiAliasing){
+					//fast approximate
+					Colour finalColour = Colour(info[y][x]) * 0.7;
+					float sideProp = 0.3 / 8;
+					for(int i = -1; i <= 1; i++)
+						for(int j = -1; j <=1; j++)
+							if(i == j && i == 0)
+								continue;
+							else
+								finalColour = finalColour + (Colour(info[(y+i)%RH][(x+j)%RW]) * sideProp);
+					window.setPixelColour(x, y, getColourData(finalColour), 0);
+				}
+				else if(mode::superAntiAliasing){
+					size_t sy = y * 4;
+					size_t sx = x * 4;
+					Colour finalColour = (Colour(info[sy][sx]) * 0.25) + (Colour(info[sy][sx+1]) * 0.25) + (Colour(info[sy+1][sx]) * 0.25) + (Colour(info[sy+1][sx+1]) * 0.25);
+					window.setPixelColour(x, y, getColourData(finalColour));
+				}
+				else{
+					window.setPixelColour(x, y, info[y][x], 0);
+				}
+			}
 		}
 	}
 }

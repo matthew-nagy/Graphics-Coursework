@@ -1,4 +1,4 @@
-PROJECT_NAME := NavigationAndTransformation
+PROJECT_NAME := Coursework1900721
 
 BUILD_DIR := build
 

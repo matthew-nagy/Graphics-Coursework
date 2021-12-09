@@ -25,15 +25,34 @@ uint32_t getColourData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255){
 	uint32_t ret = (a << 24) + (r << 16) + (g << 8) + b;
 	return ret;
 }
-uint32_t getColourData(float x, float y, TextureMap const*const map){
+uint32_t getColourData(float x, float y, TextureMap const*const map, float distance = 0.0){
 	x = std::abs(x);
 	while(x > map->width)
 		x -= map->width;
 	y = std::abs(y);
 	while(y > map->height)
 		y -= map->height;
+
 	size_t index = std::round(x) + (std::round(y) * map->width);
-	return map->pixels[index];
+
+	if(map->mip.mipMapped == false){
+		return map->pixels[index];
+	}
+	else{
+		if(distance > map->mip.highMipThreashold)
+			return map->mip.high_mip_pixels[index];
+		else if(distance < map->mip.lowMipThreashold)
+			return map->pixels[index];
+		else{
+			float range = map->mip.highMipThreashold - map->mip.lowMipThreashold;
+			float relative = distance - map->mip.lowMipThreashold;
+			float ratio = relative / range;
+
+			Colour lowMip(map->pixels[index]);
+			Colour highMip(map->mip.high_mip_pixels[index]);
+			return getColourData((highMip * ratio) + (lowMip * (1-ratio)));
+		}
+	}
 }
 
 template<class T, size_t length>

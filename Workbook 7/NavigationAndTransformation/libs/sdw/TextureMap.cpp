@@ -1,7 +1,9 @@
 #include "TextureMap.h"
 
-TextureMap::TextureMap() = default;
-TextureMap::TextureMap(const std::string &filename) {
+
+MipData __mData;
+
+void loadTexture(const std::string& filename, size_t& width, size_t& height, std::vector<uint32_t>& pixels){
 	std::ifstream inputStream(filename, std::ifstream::binary);
 
 	if(inputStream.fail() || !inputStream.is_open())
@@ -32,6 +34,15 @@ TextureMap::TextureMap(const std::string &filename) {
 	}
 	inputStream.close();
 	printf("Managed to open texture '%s'\n", filename.c_str());
+}
+
+TextureMap::TextureMap() = default;
+TextureMap::TextureMap(const std::string &filename, MipData md) {
+	loadTexture(filename, width, height, pixels);
+	if(md.mipMapped){
+		mip = md;
+		loadTexture(filename + "-high-mip.ppm", width, height, mip.high_mip_pixels);
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, const TextureMap &map) {

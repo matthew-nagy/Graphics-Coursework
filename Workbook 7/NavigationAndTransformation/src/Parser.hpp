@@ -7,6 +7,8 @@ namespace mode{
 	bool shadings = true;
 	bool quality = false;
 	bool cellShading = false;
+	bool superAntiAliasing = false;
+	bool fastAproxAntiAliasing = false;
 	float qualityOffLevel = 5;
 }
 
@@ -92,6 +94,7 @@ void ObjFile::readInObj(std::ifstream& inFile){
 	bool ignoring = false;
 
 	while(std::getline(inFile, currentLine)){
+		if(currentLine == "")continue;
 		if(ignoring){
 			if(currentLine == "focus")
 				ignoring = false;
@@ -165,6 +168,7 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 	bool onMtl = false;
 	std::string mtlName = "";
 	Material currentMtl;
+	MipData lastMip = __mData;
 	while(std::getline(inFile, currentLine)){
 		auto splits = splitStringOn(currentLine, ' ');
 		//finished, do the thing
@@ -186,9 +190,16 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 			currentMtl.isColour = true;
 			currentMtl.col = Colour( GSF(splits, 1) * 255, GSF(splits, 2) * 255, GSF(splits, 3) * 255 );
 		}
+		else if(splits[0] == "mip"){
+			lastMip.mipMapped = true;
+			lastMip.lowMipThreashold = std::atof(splits[1].c_str());
+			lastMip.highMipThreashold = std::atof(splits[2].c_str());
+			printf("Mip mapping\n");
+		}
 		else if(splits[0] == "map_Kd"){
 			currentMtl.isColour = false;
-			currentMtl.tMap = new TextureMap(splits[1]);
+			currentMtl.tMap = new TextureMap(splits[1], lastMip);
+			lastMip = __mData;
 		}
 		else if(splits[0] == "map_Kb"){
 			currentMtl.bumpMap = new TextureMap(splits[1]);
