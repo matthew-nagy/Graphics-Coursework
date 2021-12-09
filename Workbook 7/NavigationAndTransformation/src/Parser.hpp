@@ -1,5 +1,15 @@
 #include "Drawers.hpp"
 
+namespace mode{
+	bool setter = false;
+	bool shadows = true;
+	bool reflections = true;
+	bool shadings = true;
+	bool quality = false;
+	bool cellShading = false;
+	float qualityOffLevel = 5;
+}
+
 /*
 ###################################################
 ###################################################
@@ -14,6 +24,7 @@ struct Material{
 	bool isColour = true;
 	Colour col;
     TextureMap* tMap;
+	TextureMap* bumpMap = nullptr;
 	std::string name;
 	float specN = -1;
 	float reflectivity = 0.0;
@@ -77,8 +88,22 @@ void ObjFile::readInObj(std::ifstream& inFile){
 	Material* currentMaterial = nullptr;
 	NormalType currentNormalType = Regular;
 	float globalSpecN = __config["spec_general_n"];
+
+	bool ignoring = false;
+
 	while(std::getline(inFile, currentLine)){
+		if(ignoring){
+			if(currentLine == "focus")
+				ignoring = false;
+			continue;
+		}
+		else if(currentLine == "ignore"){
+			ignoring = true;
+			continue;
+		}
+
 		auto splits = splitStringOn(currentLine, ' ');
+
 		if(splits[0] == "mtllib"){
 			std::ifstream matFile(splits[1], std::ios::in);
 			readInMaterials(matFile);
@@ -147,7 +172,7 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 			if(onMtl){
 				onMtl = false;
 				materials[mtlName] = currentMtl;
-				currentMtl.tMap = nullptr;
+				currentMtl.tMap = currentMtl.bumpMap = nullptr;
 				currentMtl.specN = -1;
 				currentMtl.reflectivity = 0.0;
 			}
@@ -164,6 +189,9 @@ void ObjFile::readInMaterials(std::ifstream& inFile){
 		else if(splits[0] == "map_Kd"){
 			currentMtl.isColour = false;
 			currentMtl.tMap = new TextureMap(splits[1]);
+		}
+		else if(splits[0] == "map_Kb"){
+			currentMtl.bumpMap = new TextureMap(splits[1]);
 		}
 		else if(splits[0] == "specN"){
 			currentMtl.specN = std::atof(splits[1].c_str());
@@ -209,6 +237,7 @@ Model ObjFile::getModel(float scaleFactor){
 		else{
 			newTri.texture = m->tMap;
 		}
+		newTri.bumpmap = m->bumpMap;
 
 		glm::vec3 a = newTri.vertices[1] - newTri.vertices[0];
 		glm::vec3 b = newTri.vertices[2] - newTri.vertices[0];

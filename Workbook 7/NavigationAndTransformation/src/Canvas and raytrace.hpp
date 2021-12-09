@@ -119,7 +119,7 @@ bool ray_solutionValid(const glm::vec3& solution){
 
 
 struct RowTrace{
-	std::array<RayTriangleIntersection, WIDTH>* intoRow;
+	std::array<uint32_t, WIDTH>* intoRow;
 	float rayY;
 	Model* model;
 	Camera* camera;
@@ -130,16 +130,46 @@ struct Ray_Lighting_Info{
 	float proximityPiFactor;
 	float proximityNumerator;
 	float specularGeneralN;
+	std::array<std::pair<float, float>, 3> cellBoundries;
 	void load(){
+		/*
+cell_low_thresh:0.3
+cell_low_value:0.2
+cell_mid_thresh:0.8
+cell_mid_value:0.7
+cell_high_thresh:1.0
+celll_high_value:1.0
+		*/
 		proximityPiFactor = __config["plight_pi_factor"];
 		proximityNumerator = __config["plight_numerator"];
 		specularGeneralN = __config["spec_general_n"];
+
+		cellBoundries[0].first = __config["cell_low_thresh"];
+		cellBoundries[0].second = __config["cell_low_value"];
+		cellBoundries[1].first = __config["cell_mid_thresh"];
+		cellBoundries[1].second = __config["cell_mid_value"];
+		cellBoundries[2].first = __config["cell_high_thresh"];
+		cellBoundries[2].second = __config["cell_high_value"];
 	}
 }__rayLightInfo;
 
-Colour ray_getTexColour(const RayTriangleIntersection& rti){
+void ray_cellShadeBrightness(float& brightness){
+	float b = int(brightness * 10.0);
+	brightness = b / 10.0;
+	return;
+	for(size_t i = 0; i < __rayLightInfo.cellBoundries.size();i++)
+		if(brightness <= __rayLightInfo.cellBoundries[i].first){
+
+			brightness = __rayLightInfo.cellBoundries[i].second;
+			return;
+		}
+}
+
+enum TextureMode{tm_Normal, tm_Bump};
+Colour ray_getTexColour(const RayTriangleIntersection& rti, TextureMode texMode = tm_Normal){
 	auto& tri = rti.intersectedTriangle;
-	TextureMap* tex = tri.texture;
+
+	TextureMap* tex = texMode == tm_Normal ? tri.texture : tri.bumpmap;
 
 	auto bary = ray_barycentricProportions(rti);//2 0 1
 
@@ -197,15 +227,70 @@ glm::vec3 ray_getPhongNormal(const RayTriangleIntersection& rti, Model& model){
 	return normal;
 }
 
+glm::mat3 Identity3x3 = glm::mat3(1,0,0,  0,1,0,  0,0,1);
+
+/*def rotation_matrix_from_vectors(vec1, vec2):
+    """ Find the rotation matrix that aligns vec1 to vec2
+    :param vec1: A 3d "source" vector
+    :param vec2: A 3d "destination" vector
+    :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+    """
+    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+    v = np.cross(a, b)
+    c = np.dot(a, b)
+    s = np.linalg.norm(v)
+    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+    return rotation_matrix*/
+
+glm::mat3 operator*(glm::mat3 mat, float right){
+	for(size_t i = 0; i < 3; i++)
+		for(size_t j = 0; j < 3; j++)
+			mat[i][j] *= right;
+	return mat;
+}
+
+glm::mat3 ray_getRotationBetweenVectors(const glm::vec3& start, const glm::vec3& target){
+	glm::vec3 ns = glm::normalize(start);
+	glm::vec3 ne = glm::normalize(target);
+	auto cross = glm::cross(ns, ne);
+	auto dot = glm::dot(ns, ne);
+	auto sine = glm::length(cross);
+	
+	glm::mat3 midMatrix(0,cross.z,cross.y*-1,  cross.z*-1,0,cross.x,   cross.y,cross.x*-1,0);
+	glm::mat3 rotation =Identity3x3 + midMatrix + (midMatrix * midMatrix) * ( (1 - dot) / (pow(sine, 2)) );
+	return rotation;
+}
+
+glm::vec3 ray_getBumpedNormal(const glm::vec3& oldNormal, const RayTriangleIntersection& rti){
+	Colour normCol = ray_getTexColour(rti, tm_Bump);
+	glm::vec3 fullNormVec(normCol.red, normCol.green, normCol.blue);
+	glm::vec3 adjustedNormal = fullNormVec - glm::vec3(128);
+
+	glm::vec3 supposedNormal = glm::vec3(0, 0, 1);
+	glm::mat3 transformMatrix = ray_getRotationBetweenVectors(supposedNormal, rti.intersectedTriangle.normal);
+
+	//Not right! rotate first
+	return adjustedNormal * transformMatrix;
+}
+
 glm::vec3 ray_getNormalOf(const RayTriangleIntersection& rti, Model& model){
+	glm::vec3 normal(1);
 	switch(rti.intersectedTriangle.normalFinder){
 		case Regular:
 		case Gouraud:
-			return rti.intersectedTriangle.normal;
+			normal = rti.intersectedTriangle.normal;
 		case Phong:
-			return ray_getPhongNormal(rti, model);
+			if(mode::shadings)
+				normal = ray_getPhongNormal(rti, model);
+			else
+				normal = rti.intersectedTriangle.normal;
 	}
-	return glm::vec3(1);
+
+	if(rti.intersectedTriangle.bumpmap != nullptr)
+		normal= ray_getBumpedNormal(normal, rti);
+
+	return normal;
 }
 
 float ray_getDiffuse(float distanceToLight, float insidentIntensity, const glm::vec3& u_surfaceToLight){
@@ -228,8 +313,10 @@ float ray_getSpecular(const glm::vec3& u_surfaceToLight, const glm::vec3& u_surf
 const float ignorDistThreshold = 0.05;
 
 float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm::vec3 rayDirection, bool ignoreGouraud = false){
+	if(!mode::shadows)
+		return 0.9;
+
 	//Now handle lighting
-	float brightness = 0.2;
 			// auto intersectNormal = ray_getNormalOf(rti, model);
 
 			// intersectNormal = glm::normalize(intersectNormal);
@@ -237,7 +324,13 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 			// return 0.5;
 
 	glm::vec3 intersectPosition = rti.intersectionPoint;
-	glm::vec3 intersectionToLight = model.lights[0].position - intersectPosition;
+
+	float totBrightness = 0.0;
+
+	for(size_t i = 0; i < model.lights.size(); i++){
+
+	float brightness = 0.2;
+	glm::vec3 intersectionToLight = model.lights[i].position - intersectPosition;
 	float distanceToLight = glm::length(intersectionToLight);
 	glm::vec3 u_intersectionToLight = glm::normalize(intersectionToLight);
 	auto lightIntersectInfo = ray_getCell(model, u_intersectionToLight, intersectPosition, rti.triangleIndex);
@@ -253,7 +346,7 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 	}
 
 	if(illuminated){
-		if(rti.intersectedTriangle.normalFinder != Gouraud || ignoreGouraud){
+		if(rti.intersectedTriangle.normalFinder != Gouraud || ignoreGouraud || !mode::shadings){
 			//Hecc it, keep this code
 			auto intersectNormal = ray_getNormalOf(rti, model);
 
@@ -278,7 +371,7 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 			for(size_t i = 0; i <3;i++){
 				glm::vec3& surfaceNormal = thisTri.vertexNormals[i];
 				auto vertPos = rti.intersectedTriangle.vertices[i];
-				glm::vec3 vertexToLight = model.lights[0].position - rti.intersectedTriangle.vertices[i];
+				glm::vec3 vertexToLight = model.lights[i].position - rti.intersectedTriangle.vertices[i];
 				glm::vec3 u_vertexToLight = glm::normalize(vertexToLight);
 				float insidentIntensity = glm::dot(u_vertexToLight, surfaceNormal);
 				clamp<float>(insidentIntensity, 0.0, 1.0);
@@ -293,14 +386,23 @@ float ray_setRTI(RayTriangleIntersection& rti, Model& model, Camera& camera, glm
 			brightness = rayBright[0]*bcc[2] + rayBright[1]*bcc[0] + rayBright[2]*bcc[1];
 		}
 	}
-	
 	clamp<float>(brightness, 0.2, 1.0);
-	rti.colour = rti.colour * brightness;
+	totBrightness += brightness;
+
+	}
+
+	totBrightness = totBrightness / float(model.lights.size());
+
+	if(mode::cellShading){
+		ray_cellShadeBrightness(totBrightness);
+	}
+
+	rti.colour = rti.colour * totBrightness;
 
 	//auto bcc = ray_barycentricProportions(model.triangles[rti.triangleIndex], rti.intersectionPoint);
 	//rti.intersectedTriangle.colour = Colour(bcc[0] * 200, bcc[1] * 200, bcc[2] * 200);
 
-	return brightness;
+	return totBrightness;
 
 }
 
@@ -313,7 +415,7 @@ RayTriangleIntersection ray_getRay(glm::vec3 rayDirection, Camera& camera, glm::
 	RayTriangleIntersection rti = ray_getCell(model, rayDirection, shootPos, ignoredIndex);
 	if(rti.hasIntersection){
 		float reflectivity = rti.intersectedTriangle.reflectivity;
-		if(reflectivity > 0 && reflections < MaxReflectionNum){
+		if(reflectivity > 0 && reflections < MaxReflectionNum && mode::reflections){
 			auto normal = ray_getNormalOf(rti, model);
 			glm::vec3 reflectiveRay = rayDirection - (2 *  normal * glm::dot(rayDirection, normal));
 			RayTriangleIntersection reflection = ray_getRay(reflectiveRay, camera, rti.intersectionPoint, model, reflections+1, rti.triangleIndex);
@@ -332,10 +434,14 @@ void ray_traceRow(void* voidRowTracePtr){
 	Camera& camera = *rowTrace->camera;
 	Model& model = *rowTrace->model;
 	float focalDivider = 300.0;
-	for(float x = WIDTH / -2; x < WIDTH / 2 && arrayX < WIDTH; x++){
-		RayTriangleIntersection& rti = rowTrace->intoRow->operator[](arrayX);
+	float incr = mode::quality ? 1 : mode::qualityOffLevel;
+	for(float x = WIDTH / -2; x < WIDTH / 2 && arrayX < WIDTH; x+= incr){
 		glm::vec3 rayDirection(x / focalDivider, rowTrace->rayY / focalDivider * -1, camera.focalLength * -1);
-		rti = ray_getRay(rayDirection, camera, camera.rayPos, model);
+		RayTriangleIntersection ray = ray_getRay(rayDirection, camera, camera.rayPos, model);
+		if(ray.hasIntersection)
+			rowTrace->intoRow->operator[](arrayX) = getColourData(ray.colour);
+		else
+			rowTrace->intoRow->operator[](arrayX) = 0;
 		
 
 		arrayX++;
@@ -344,11 +450,12 @@ void ray_traceRow(void* voidRowTracePtr){
 	delete rowTrace;
 }
 
-void ray_raytraceInto(std::array<std::array<RayTriangleIntersection, WIDTH>, HEIGHT>& into, Model& model, Camera& camera){
+void ray_raytraceInto(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& into, Model& model, Camera& camera){
 	int arrayX, arrayY;
 	arrayX = arrayY = 0;
 	Semaphore finish(0);
-	for(float y = HEIGHT / -2.0; y < HEIGHT / 2.0 && arrayY < HEIGHT; y++){
+	float incr = mode::quality ? 1 : mode::qualityOffLevel;
+	for(float y = HEIGHT / -2.0; y < HEIGHT / 2.0 && arrayY < HEIGHT; y+= incr){
 		RowTrace* thisRow = new RowTrace();
 		thisRow->camera = &camera;
 		thisRow->model = &model;
@@ -364,12 +471,16 @@ void ray_raytraceInto(std::array<std::array<RayTriangleIntersection, WIDTH>, HEI
 		finish.decriment();
 }
 
-void ray_drawResult(std::array<std::array<RayTriangleIntersection, WIDTH>, HEIGHT>& info, Window& window){
-	for(size_t y = 0; y < HEIGHT; y++){
-		for(size_t x = 0; x < WIDTH; x++){
-			if(info[y][x].hasIntersection){
-				window.setPixelColour(x, y, getColourData(info[y][x].colour), info[y][x].distanceFromCamera);
-			}
+void ray_drawResult(std::array<std::array<uint32_t, WIDTH>, HEIGHT>& info, Window& window){
+	float incr = mode::quality ? 1 : mode::qualityOffLevel;
+	for(size_t y = 0; y < HEIGHT / incr; y++){
+		for(size_t x = 0; x < WIDTH / incr; x++){
+			if(incr > 1)
+				for(size_t i = 0; i < incr; i++)
+					for(size_t j = 0; j < incr; j++)
+						window.setPixelColour((x*incr)+j, (y*incr)+i, info[y][x], 0);
+			else
+						window.setPixelColour(x, y, info[y][x], 0);
 		}
 	}
 }

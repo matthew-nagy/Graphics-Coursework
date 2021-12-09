@@ -125,6 +125,25 @@ void handleLight(SDL_Event event, Light& l){
 	}
 }
 
+
+void handleFlags(SDL_Event event){
+	if(event.key.keysym.sym == SDLK_f)
+		mode::setter = true;
+	if(event.key.keysym.sym == SDLK_g)
+		mode::setter = false;
+	if(event.key.keysym.sym == SDLK_e)
+		mode::shadows = mode::setter;
+	if(event.key.keysym.sym == SDLK_r)
+		mode::reflections = mode::setter;
+	if(event.key.keysym.sym == SDLK_t)
+		mode::shadings = mode::setter;
+	if(event.key.keysym.sym == SDLK_y)
+		mode::quality = mode::setter;
+	if(event.key.keysym.sym == SDLK_u)
+		mode::cellShading = mode::setter;
+
+}
+
 int main(int argc, char *argv[]) {
 	loadConfig();
 	__rayLightInfo.load();
@@ -163,23 +182,22 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 	float orbitSpeed = 0.1;
 
-	std::array<std::array<RayTriangleIntersection, WIDTH>, HEIGHT>* raytraceInfo = new std::array<std::array<RayTriangleIntersection, WIDTH>, HEIGHT>;
+	std::array<std::array<uint32_t, WIDTH>, HEIGHT>* raytraceInfo = new std::array<std::array<uint32_t, WIDTH>, HEIGHT>;
 
 	float totalT = 0.0;
 	unsigned fCount = 0;
 	while (window.isOpen()) {
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-		for(auto& t : model.triangles)
-			t.foundGouraudThisFrame = false;
-
 		dp.clearPixels();
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)){
 			handleEvent(event, dp, camera);
 			handleCamera(event, camera, deltaT);
+			handleFlags(event);
 			if(model.lights.size() > 0)
-				handleLight(event, model.lights[0]);
+				for(size_t i = 0; i < model.lights.size(); i++)
+					handleLight(event, model.lights[i]);
 		}
 		if(orbit){
 			camera.rotatePositionAround('y', orbitSpeed);
@@ -201,18 +219,6 @@ int main(int argc, char *argv[]) {
 				ray_raytraceInto(*raytraceInfo, model, camera);
 				ray_drawResult(*raytraceInfo, dp);
 				break;
-		}
-		for(auto& l : model.lights){
-			glm::mat3 oo = camera.orientation;
-			glm::vec3 op = camera.pos;
-			camera.pos = camera.rayPos;
-			camera.orientation = camera.rayOrientation;
-			auto cip = getCanvasIntersectionPoint(camera, l.position, camera.focalLength);
-			for(int i = -1; i < 2; i++)
-				for(int j = -1; j < 2; j++)
-					dp.setPixelColour(cip.x + j, cip.y + i, 0xFFFFFFFF, cip.depth);
-			camera.pos = op;
-			camera.orientation = oo;
 		}
 		window.renderFrame();
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

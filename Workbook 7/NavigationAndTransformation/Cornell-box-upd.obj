@@ -30,7 +30,7 @@ f 10/ 12/ 9/
 f 10/ 11/ 12/
 
 o floor
-usemtl Cobbles
+usemtl Checker
 v -2.7470112 -2.7382329 2.806401
 v 2.780989 -2.7382329 2.806401
 v 2.780989 -2.742686 -2.785598
@@ -128,7 +128,7 @@ f 58/ 59/ 60/
 f 62/ 63/ 64/
 
 o floorfloor
-usemtl Checker
+usemtl Cobbles
 v 4 4 -1
 v 10 4 -1
 v 10 -4 -1

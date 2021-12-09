@@ -17,14 +17,12 @@ struct ModelTriangle {
 	Colour colour{};
 	glm::vec3 normal{};
 	TextureMap* texture = nullptr;
+	TextureMap* bumpmap = nullptr;
 
 	float specN;
 	float reflectivity;
 
 	float area;
-
-	bool foundGouraudThisFrame = false;
-	std::array<float, 3> vertexGouraudBrightnesses;
 
 	ModelTriangle();
 	ModelTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, Colour trigColour);
