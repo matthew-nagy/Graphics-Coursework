@@ -1,0 +1,53 @@
+newmtl White
+Kd 1.000000 1.000000 1.000000
+
+newmtl Grey
+Kd 0.700000 0.700000 0.700000
+reflective 0.3
+
+newmtl Red
+Kd 1.000000 0.000000 0.000000
+
+newmtl Green
+Kd 0.000000 1.000000 0.000000
+reflective 0.3
+
+newmtl Blue
+Kd 0.000000 0.000000 1.000000
+
+newmtl Yellow
+Kd 1.000000 1.000000 0.000000
+reflective 0.3
+
+newmtl Magenta
+Kd 1.000000 0.000000 1.000000
+reflective 0.3
+
+newmtl Cyan
+Kd 0.000000 1.000000 1.000000
+reflective 0.3
+
+newmtl Cobbles
+Kd 1.000000 1.000000 1.000000
+map_Kd texture.ppm
+
+newmtl Checker
+Kd 1.0 1.0 1.0
+map_Kd checker.ppm
+//map_Kb rockBump.ppm
+reflective 0.3
+
+newmtl MipChecker
+Kd 1.0 1.0 1.0
+mip 3.0 10.0
+map_Kd checker.ppm
+
+newmtl VoxSlock
+hoid
+Kd 1.0 1.0 1.0
+mip 1.0 3.0
+map_Kd VoxFrame-0000.ppm
+
+newmtl sphereMtl
+Kd 0.8 0.0 0.9
+reflective 0.3

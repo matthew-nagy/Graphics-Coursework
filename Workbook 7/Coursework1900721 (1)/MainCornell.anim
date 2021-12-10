@@ -1,0 +1,103 @@
+Length
+261
+
+From 0 to 91 instant
+SetEngine Raytrace
+Flags O O O O X X X
+End
+
+From 53 to 330 instant
+SetEngine Raytrace
+End
+
+From 0 to 0 instant
+Position 0.000000 0.000000 7.000000 0.000000 0.000000 7.000000
+Rotation 86.000000 0.000000
+End
+
+From 1 to 20 easeDown
+Position -0.258819 0.000000 0.034074 0.258819 0.000000 0.034074
+End
+
+From 1 to 20 linear
+Rotation 214.000000 26.000000
+End
+
+From 21 to 31 easeUp
+Position -2.755565 -0.729022 1.528791 2.502879 -1.315114 1.528791
+End
+
+From 32 to 41 easeDown
+Position -3.349593 1.770660 6.160286 3.073674 -1.801422 6.521586
+End
+
+From 21 to 41 sine
+Rotation 72.000000 -8.000000
+End
+
+From 42 to 52 linear
+Position -3.349593 1.770660 6.160286 3.073674 -1.801422 6.521586
+Rotation 96.000000 -8.000000
+End
+
+From 53 to 90 linear
+Position -1.781666 7.813821 20.428261 1.468252 0.077981 21.796148
+Rotation 96.000000 -2.000000
+End
+
+
+during the flag stuff, stay still
+From 91 to 140 instant
+Position -1.781666 7.813821 20.428261 1.468252 0.077981 21.796148
+Rotation 96.000000 -2.000000
+End
+
+From 91 to 110 instant
+Flags X O O O X X X
+End
+
+From 111 to 127 instant
+Flags X O X O X X X
+End
+
+From 128 to 170 instant
+Flags O O O O O X X
+End
+
+From 141 to 170 sine
+Position -10.839501 7.763926 18.999428 10.526023 0.112881 20.367048
+Rotation 68.000000 -2.000000
+End
+
+From 171 to 200 sine
+Position 3.975822 7.682036 16.654333 -4.289304 0.112881 18.020523
+Rotation 113.000000 -2.000000
+End
+
+From 201 to 220 instant
+Position 3.975822 7.682036 16.654333 -4.289304 0.112881 18.020523
+Rotation 113.000000 -2.000000
+End
+
+From 171 to 190 linear
+Position -1.345358 7.561230 13.194918 1.031663 0.252479 14.561420
+Rotation 94.000000 -2.000000
+Flags X O X O X X X 
+End
+
+From 191 to 220 sine
+Position -3.340486 7.566098 13.334345 3.026791 0.252479 14.700933
+Rotation 94.000000 -2.000000
+Flags X O X O X O X
+End
+
+Skip
+250
+
+From 221 to 260 sine
+Position 1.647334 7.553927 12.985777 -1.961029 0.252479 14.352151
+Rotation 94.000000 -2.000000
+Flags X O X O X X O
+End
+
+
