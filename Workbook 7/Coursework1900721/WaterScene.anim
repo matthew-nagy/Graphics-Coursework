@@ -1,0 +1,119 @@
+
+Length
+391
+
+From 0 to 391 instant
+SetEngine Raytrace
+End
+
+From 0 to 189 instant
+Flags O O O O X X X
+End
+
+start at
+From 0 To 72 instant
+Position -7.036944 29.035999 112.339294 6.728332 25.572271 99.742325
+Rotation 86.000000 20.000000
+End
+
+then go above the hackspace thing
+From 73 to 98 sine
+Position -1.037885 68.074242 37.131763 0.588089 13.356899 11.932971
+Rotation 86.000000 47.000000
+End
+
+Skip
+98
+
+oribit it for a bit (figure out how to do this)
+From 99 to 148 linear
+Orbit
+End
+
+From 148 to 148 instant
+Position -1.037885 68.074242 37.131763 0.588089 13.356899 11.932971
+Rotation 86.000000 47.000000
+End
+
+Then out to
+From 149 to 172 linear
+Position -12.539909 -2.710505 18.546488 11.962751 4.980913 17.777348
+Rotation 63.000000 24.000000
+End
+
+,quik back to 
+From 173 to 178 easeUp
+Position -18.441792 -7.421768 29.128155 17.354382 10.268490 28.359015
+Rotation 63.000000 24.000000
+End
+
+then charge in to
+From 179 to 189 easeUp
+Position -2.552114 5.262405 0.639038 2.838453 -3.967294 -0.130104
+Rotation 63.000000 24.000000
+End
+
+
+From 190 t0 292 instant
+Flags O O O X O X X
+
+spin out to 
+From 190 to 262 easeDown
+Position 4.577710 -1.544179 65.828194 -4.847851 22.885277 57.412209
+Rotation -644.000000 -1.000000
+End
+
+
+refocus to
+From 263 to 273 linear
+Position 4.577710 -1.544179 65.828194 -4.847851 22.885277 57.412209
+Rotation -625.000000 15.000000
+End
+
+
+shake back an forth twix
+From 274 to 279 linear
+Rotation -615.000000 15.000000
+End
+
+From 280 to 285
+Rotation -639.000000 15.000000
+End
+
+From 286 to 292 linear
+Rotation -615.000000 15.000000
+End
+
+From 293 to 390 instant
+Flags O O O O X X X
+End
+
+From 293 to 310 linear
+Rotation -625.000000 15.000000
+End
+
+
+
+From 274 to 311 linear
+Position 4.577710 -1.544179 65.828194 -4.847851 22.885277 57.412209
+End
+
+From 311 to 311 linear
+Rotation 95 15
+
+subtly go to slock at
+From 312 to 340 sine
+Position -63.220379 84.789253 1.101912 57.904579 48.552536 -26.492350
+Rotation 4.000000 30.000000
+End
+
+
+From 341 to 360 sine
+Position -49.992222 0.032377 -27.145092 49.984604 -0.872621 -27.144939
+Rotation 1.000000 -1.000000
+End
+
+From 361 to 390 easeUp
+Position -1.999543 0.017757 -27.982708 1.999238 -0.034905 -27.982555
+Rotation 1.000000 -1.000000
+End

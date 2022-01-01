@@ -1,0 +1,29 @@
+# Blender MTL File: 'water scene.blend'
+# Material Count: 2
+
+newmtl Leopard
+Kd 1 1 1
+map_Kd Leopard.ppm
+
+newmtl None
+Kd 0.8 0.8 0.8
+
+newmtl CobbleWall
+Kd 1 1 1
+map_Kb rockBumpScaled.ppm
+reflective 0.1
+map_Kd texture.ppm
+FX-wall 0.05 0.11 0.03 -5.72 6.5 0.9 0.8 0.95
+
+newmtl CobbleFloor
+Kd 1 1 1
+map_Kd texture.ppm
+reflective 0.4
+FX-floor 0.1 0.1 -0.43 0 10 0.9 0.35
+
+newmtl Simon
+hoid
+Kd 1.0 1.0 1.0
+mip 5.0 20.0
+map_Kd slock.ppm
+
